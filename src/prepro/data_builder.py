@@ -98,9 +98,11 @@ def load_xml(p):
             break
     if (len(paras) > 0):
         if (len(byline) > 0):
-            paras = [title + ['[unused3]'] + byline + ['[unused4]']] + paras
+            # paras = [title + ['[unused3]'] + byline + ['[unused4]']] + paras
+            paras = [title + ['[unused4]'] + byline + ['[unused5]']] + paras
         else:
-            paras = [title + ['[unused3]']] + paras
+            # paras = [title + ['[unused3]']] + paras
+            paras = [title + ['[unused4]']] + paras
 
         return paras, abs
     else:
@@ -115,18 +117,21 @@ def tokenize(args):
     stories = os.listdir(stories_dir)
     # make IO list file
     print("Making list of files to tokenize...")
+    print('cwd',os.getcwd())
     with open("mapping_for_corenlp.txt", "w") as f:
         for s in stories:
             if (not s.endswith('story')):
                 continue
-            f.write("%s\n" % (os.path.join(stories_dir, s)))
-    command = ['java', 'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
-               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', 'mapping_for_corenlp.txt', '-outputFormat',
-               'json', '-outputDirectory', tokenized_stories_dir]
+            f.write("%s\n" % (os.path.join(stories_dir, s))) #"'*'",
+    command = ['java', "-cp", "'*'",  'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
+               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', "/content/drive/'My Drive'/master/PreSumm/stanford-corenlp-full-2018-10-05/"+'/mapping_for_corenlp.txt', '-outputFormat',
+               'json', '-outputDirectory', '/content/drive/"My Drive"/master/croatian/merged_stories_tokenized_multilingual'] #tokenized_stories_dir]
     print("Tokenizing %i files in %s and saving in %s..." % (len(stories), stories_dir, tokenized_stories_dir))
-    subprocess.call(command)
+    print(' '.join(command))
+    # subprocess.call(command)
+    subprocess.Popen("cd /content/drive/'My Drive'/master/PreSumm/stanford-corenlp-full-2018-10-05/;"+' '.join(command), shell=True)
     print("Stanford CoreNLP Tokenizer has finished.")
-    os.remove("mapping_for_corenlp.txt")
+    # os.remove("mapping_for_corenlp.txt")
 
     # Check that the tokenized stories directory contains the same number of files as the original directory
     num_orig = len(os.listdir(stories_dir))
@@ -207,20 +212,26 @@ def hashhex(s):
 class BertData():
     def __init__(self, args):
         self.args = args
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-
+        # self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+        self.tokenizer = BertTokenizer.from_pretrained(args.use_this_bert, do_lower_case=True)
+        
         self.sep_token = '[SEP]'
         self.cls_token = '[CLS]'
         self.pad_token = '[PAD]'
-        self.tgt_bos = '[unused0]'
-        self.tgt_eos = '[unused1]'
-        self.tgt_sent_split = '[unused2]'
+        if args.use_this_bert == 'bert-base-multilingual-uncased':
+            self.tgt_bos = '[unused1]'
+            self.tgt_eos = '[unused2]'
+            self.tgt_sent_split = '[unused3]'
+        else:
+            self.tgt_bos = '[unused0]'
+            self.tgt_eos = '[unused1]'
+            self.tgt_sent_split = '[unused2]'
         self.sep_vid = self.tokenizer.vocab[self.sep_token]
         self.cls_vid = self.tokenizer.vocab[self.cls_token]
         self.pad_vid = self.tokenizer.vocab[self.pad_token]
 
     def preprocess(self, src, tgt, sent_labels, use_bert_basic_tokenizer=False, is_test=False):
-
+        is_test = True
         if ((not is_test) and len(src) == 0):
             return None
 
@@ -258,8 +269,12 @@ class BertData():
         cls_ids = [i for i, t in enumerate(src_subtoken_idxs) if t == self.cls_vid]
         sent_labels = sent_labels[:len(cls_ids)]
 
-        tgt_subtokens_str = '[unused0] ' + ' [unused2] '.join(
-            [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused1]'
+        if self.args.use_this_bert == 'bert-base-multilingual-uncased':
+            tgt_subtokens_str = '[unused1] ' + ' [unused3] '.join(
+                [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused2]'
+        else:
+            tgt_subtokens_str = '[unused0] ' + ' [unused2] '.join(
+                [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused1]'
         tgt_subtoken = tgt_subtokens_str.split()[:self.args.max_tgt_ntokens]
         if ((not is_test) and len(tgt_subtoken) < self.args.min_tgt_ntokens):
             return None
@@ -334,18 +349,22 @@ def format_to_lines(args):
         temp = []
         for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
             temp.append(hashhex(line.strip()))
+            # temp.append(line.strip())
         corpus_mapping[corpus_type] = {key.strip(): 1 for key in temp}
     train_files, valid_files, test_files = [], [], []
     for f in glob.glob(pjoin(args.raw_path, '*.json')):
+        # real_name = f.split('/')[-1].split('.')[0]
         real_name = f.split('/')[-1].split('.')[0]
+        # print(real_name)
         if (real_name in corpus_mapping['valid']):
             valid_files.append(f)
         elif (real_name in corpus_mapping['test']):
             test_files.append(f)
         elif (real_name in corpus_mapping['train']):
             train_files.append(f)
-        # else:
-        #     train_files.append(f)
+        ## ovo else je bilo zakomentarisano
+        else:
+            train_files.append(f)
 
     corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
     for corpus_type in ['train', 'valid', 'test']:
