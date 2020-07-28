@@ -231,7 +231,7 @@ class BertData():
         self.pad_vid = self.tokenizer.vocab[self.pad_token]
 
     def preprocess(self, src, tgt, sent_labels, use_bert_basic_tokenizer=False, is_test=False):
-        is_test = True
+        #is_test = True
         if ((not is_test) and len(src) == 0):
             return None
 
