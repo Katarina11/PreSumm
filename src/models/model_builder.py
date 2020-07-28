@@ -117,7 +117,7 @@ class Bert(nn.Module):
         super(Bert, self).__init__()
         print('Bert initializing', large)
         if(large):
-            self.model = BertModel.from_pretrained(use_this_bert, cache_dir=temp_dir, force_download=True)
+            self.model = BertModel.from_pretrained(use_this_bert, cache_dir=temp_dir )
             # config = BertConfig.from_pretrained('../../crosloengual')
             # config.vocab_size = 30522
             ##
@@ -125,7 +125,7 @@ class Bert(nn.Module):
             # self.model.resize_token_embeddings(30522)
         else:
             # self.model = BertModel.from_pretrained('bert-base-uncased', cache_dir=temp_dir)
-            self.model = BertModel.from_pretrained(use_this_bert, cache_dir=temp_dir, force_download=True)
+            self.model = BertModel.from_pretrained(use_this_bert, cache_dir=temp_dir )
             ##
             # config = BertConfig.from_pretrained('../../crosloengual')
             # config.vocab_size = 30522
