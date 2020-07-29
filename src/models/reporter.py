@@ -154,6 +154,12 @@ class ReportMgr(ReportMgrBase):
                                        lr,
                                        step)
 
+            f = open("/home/kmilacic/local/BertSumm/logs/validation_multilingual", "a")
+            f.write('Step', step)
+            f.write('Validation perplexity: %g' % valid_stats.ppl())
+            f.write('Validation accuracy: %g' % valid_stats.accuracy())
+            f.close()
+
 
 class Statistics(object):
     """
