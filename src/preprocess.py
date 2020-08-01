@@ -67,6 +67,10 @@ if __name__ == '__main__':
 
     parser.add_argument('-n_cpus', default=2, type=int)
 
+    ###
+    parser.add_argument("-use_this_bert", type=str, default='bert-base-uncased')
+    ###
+
 
     args = parser.parse_args()
     init_logger(args.log_file)
