@@ -124,7 +124,7 @@ def tokenize(args):
                 continue
             f.write("%s\n" % (os.path.join(stories_dir, s))) #"'*'",
     command = ['java', "-cp", "'*'",  'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
-               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', "/home/kmilacic/local/PreSumm/stanford-corenlp-full-2018-10-05/"+'/mapping_for_corenlp.txt', '-outputFormat',
+               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', os.getcwd()+'/mapping_for_corenlp.txt', '-outputFormat',
                'json', '-outputDirectory', tokenized_stories_dir]
     print("Tokenizing %i files in %s and saving in %s..." % (len(stories), stories_dir, tokenized_stories_dir))
     print(' '.join(command))
