@@ -124,12 +124,12 @@ def tokenize(args):
                 continue
             f.write("%s\n" % (os.path.join(stories_dir, s))) #"'*'",
     command = ['java', "-cp", "'*'",  'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
-               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', "/content/drive/'My Drive'/master/PreSumm/stanford-corenlp-full-2018-10-05/"+'/mapping_for_corenlp.txt', '-outputFormat',
-               'json', '-outputDirectory', '/content/drive/"My Drive"/master/croatian/merged_stories_tokenized_multilingual'] #tokenized_stories_dir]
+               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', "/home/kmilacic/local/PreSumm/stanford-corenlp-full-2018-10-05/"+'/mapping_for_corenlp.txt', '-outputFormat',
+               'json', '-outputDirectory', tokenized_stories_dir]
     print("Tokenizing %i files in %s and saving in %s..." % (len(stories), stories_dir, tokenized_stories_dir))
     print(' '.join(command))
     # subprocess.call(command)
-    subprocess.Popen("cd /content/drive/'My Drive'/master/PreSumm/stanford-corenlp-full-2018-10-05/;"+' '.join(command), shell=True)
+    subprocess.Popen("cd /home/kmilacic/local/PreSumm/stanford-corenlp-full-2018-10-05/;"+' '.join(command), shell=True)
     print("Stanford CoreNLP Tokenizer has finished.")
     # os.remove("mapping_for_corenlp.txt")
 
