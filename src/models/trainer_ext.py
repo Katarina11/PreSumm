@@ -289,11 +289,11 @@ class Trainer(object):
                             src.append(batch.src_str[i])
 
                         for i in range(len(gold)):
-                            save_gold.write(gold[i].strip() + '\n')
+                            save_gold.write(str(i) + ': ' + gold[i].strip() + '\n')
                         for i in range(len(pred)):
-                            save_pred.write(pred[i].strip() + '\n')
+                            save_pred.write(str(i) + ': ' + pred[i].strip() + '\n')
                         for i in range(len(pred)):
-                            f.write(src[i].strip()+'\n')
+                            f.write(str(i) + ': ' + src[i].strip()+'\n')
         f.close()
         if (step != -1 and self.args.report_rouge):
             rouges = test_rouge(self.args.temp_dir, can_path, gold_path)
