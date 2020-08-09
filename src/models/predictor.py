@@ -151,38 +151,39 @@ class Translator(object):
 
                 for trans in translations:
                     pred, gold, src = trans
-                    if self.args.use_this_bert == 'bert-base-multilingual-uncased':
-                        pred_str = pred.replace('[unused1]', '').replace('[unused4]', '').replace('[PAD]', '').replace('[unused2]', '').replace(r' +', ' ').replace(' [unused3] ', '<q>').replace('[unused3]', '').strip()
-                    else:
-                        pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').strip()
-                    gold_str = gold.strip()
-                    if(self.args.recall_eval):
-                        _pred_str = ''
-                        gap = 1e3
-                        for sent in pred_str.split('<q>'):
-                            can_pred_str = _pred_str+ '<q>'+sent.strip()
-                            can_gap = math.fabs(len(_pred_str.split())-len(gold_str.split()))
-                            # if(can_gap>=gap):
-                            if(len(can_pred_str.split())>=len(gold_str.split())+10):
-                                pred_str = _pred_str
-                                break
-                            else:
-                                gap = can_gap
-                                _pred_str = can_pred_str
+                    if len(src.strip().replace(' ##','')) > 250:
+                        if self.args.use_this_bert == 'bert-base-multilingual-uncased':
+                            pred_str = pred.replace('[unused1]', '').replace('[unused4]', '').replace('[PAD]', '').replace('[unused2]', '').replace(r' +', ' ').replace(' [unused3] ', '<q>').replace('[unused3]', '').strip()
+                        else:
+                            pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').strip()
+                        gold_str = gold.strip()
+                        if(self.args.recall_eval):
+                            _pred_str = ''
+                            gap = 1e3
+                            for sent in pred_str.split('<q>'):
+                                can_pred_str = _pred_str+ '<q>'+sent.strip()
+                                can_gap = math.fabs(len(_pred_str.split())-len(gold_str.split()))
+                                # if(can_gap>=gap):
+                                if(len(can_pred_str.split())>=len(gold_str.split())+10):
+                                    pred_str = _pred_str
+                                    break
+                                else:
+                                    gap = can_gap
+                                    _pred_str = can_pred_str
 
 
 
-                        # pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
-                    # self.raw_can_out_file.write(' '.join(pred).strip() + '\n')
-                    # self.raw_gold_out_file.write(' '.join(gold).strip() + '\n')
-                    print('src', src.strip().replace(' ##',''))
-                    print('pred', pred_str)
-                    print('\n')
-                    # print('gold_str', gold_str)
-                    self.can_out_file.write(str(ct) + ': ' + pred_str + '\n')
-                    self.gold_out_file.write(str(ct) + ': ' + gold_str + '\n')
-                    self.src_out_file.write(str(ct) + ': ' + src.strip().replace(' ##','') + '\n')
-                    ct += 1
+                            # pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
+                        # self.raw_can_out_file.write(' '.join(pred).strip() + '\n')
+                        # self.raw_gold_out_file.write(' '.join(gold).strip() + '\n')
+                        print('src', src.strip().replace(' ##',''))
+                        print('pred', pred_str)
+                        print('\n')
+                        # print('gold_str', gold_str)
+                        self.can_out_file.write(str(ct) + ': ' + pred_str + '\n')
+                        self.gold_out_file.write(str(ct) + ': ' + gold_str + '\n')
+                        self.src_out_file.write(str(ct) + ': ' + src.strip().replace(' ##','') + '\n')
+                        ct += 1
                 self.can_out_file.flush()
                 self.gold_out_file.flush()
                 self.src_out_file.flush()
