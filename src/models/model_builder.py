@@ -231,12 +231,14 @@ class AbsSummarizer(nn.Module):
 
         self.generator = get_generator(self.vocab_size, self.args.dec_hidden_size, device)
         self.generator[0].weight = self.decoder.embeddings.weight
-        print('self.generator', self.generator)
-        print('self.generator[0[', self.generator[0])
+        # print('self.generator', self.generator)
+        # print('self.generator[0[', self.generator[0])
 
 
         if checkpoint is not None:
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            for k in checkpoint['model'].keys():
+                print(k)
             # pretrained_dict = {k: v for k, v in checkpoint['model'].items() if k not in 
             # ['bert.model.embeddings.word_embeddings.weight', 'decoder.embeddings.weight', 'generator.0.weight', 'generator.0.bias']
             #     and not k.startswith('bert.model')
