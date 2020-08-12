@@ -237,8 +237,11 @@ class AbsSummarizer(nn.Module):
 
         if checkpoint is not None:
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            src_path2 = '%s_step.src' % (self.args.result_path)
+            f2 = open(src_path2, 'w')
             for k in checkpoint['model'].keys():
-                print(k)
+                f2.write(k)
+            f2.close()
             # pretrained_dict = {k: v for k, v in checkpoint['model'].items() if k not in 
             # ['bert.model.embeddings.word_embeddings.weight', 'decoder.embeddings.weight', 'generator.0.weight', 'generator.0.bias']
             #     and not k.startswith('bert.model')
