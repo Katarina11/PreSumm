@@ -244,7 +244,7 @@ class Trainer(object):
 
                         gold = []
                         pred = []
-                        src = []
+                        src_fix = []
 
                         if (cal_lead):
                             selected_ids = [list(range(batch.clss.size(1)))] * batch.batch_size
@@ -286,14 +286,14 @@ class Trainer(object):
 
                             pred.append(_pred)
                             gold.append(batch.tgt_str[i])
-                            src.append(batch.src_str[i])
+                            src_fix.append(batch.src_str[i])
 
                         for i in range(len(gold)):
                             save_gold.write(str(i) + ': ' + gold[i].strip() + '\n')
                         for i in range(len(pred)):
                             save_pred.write(str(i) + ': ' + pred[i].strip() + '\n')
                         for i in range(len(pred)):
-                            f.write(str(i) + ': ' + src[i].strip()+'\n')
+                            f.write(str(i) + ': ' + src_fix[i].strip()+'\n')
         f.close()
         if (step != -1 and self.args.report_rouge):
             rouges = test_rouge(self.args.temp_dir, can_path, gold_path)
