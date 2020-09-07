@@ -1,12 +1,12 @@
 # Step 3. Sentence Splitting and Tokenization
 
-python3 ~/local/BertSumm/src/preprocess.py -mode stanford_nlp_tokens_format \
+python preprocess.py -mode stanford_nlp_tokens_format \
 -raw_path  ~/local/sta-news-split/src \
--save_path ~/local/sta_dataset/merged_stories_tokenized \
+-save_path ~/local/sta_dataset/merged_stories_tokenized/sta \
 -log_file ~/local/sta_dataset/logs.txt
 
 # Step 4. Format to Simpler Json Files
-python3 ~/local/BertSumm/src/preprocess.py \
+python preprocess.py \
 -mode format_to_lines \
 -raw_path ~/local/sta_dataset/merged_stories_tokenized \
 -save_path ~/local/sta_dataset/json_data/sta \
