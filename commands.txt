@@ -1,0 +1,26 @@
+# Step 3. Sentence Splitting and Tokenization
+
+python3 ~/local/BertSumm/src/preprocess.py -mode stanford_nlp_tokens_format \
+-raw_path  ~/local/sta-news-split/src \
+-save_path ~/local/sta_dataset/merged_stories_tokenized \
+-log_file ~/local/sta_dataset/logs.txt
+
+# Step 4. Format to Simpler Json Files
+python3 ~/local/BertSumm/src/preprocess.py \
+-mode format_to_lines \
+-raw_path ~/local/sta_dataset/merged_stories_tokenized \
+-save_path ~/local/sta_dataset/json_data/sta \
+-n_cpus 1 \
+-use_bert_basic_tokenizer false \
+-log_file ~/local/sta_dataset/logs.txt \
+-map_path ~/local/BertSumm/urls
+
+u data_builder si dodala is_test = True, pazi se toga!!!!
+# Step 5. Format to PyTorch Files
+python ~/local/BertSumm/src/preprocess.py \
+-mode format_to_bert \
+-raw_path ~/local/croatian/json_data_multilingual \
+-save_path ~/local/croatian/bert_data_eng_uncased \
+-lower -n_cpus 1 \
+-log_file ~/local/croatian/preprocess.log \
+-use_this_bert ../crosloengual

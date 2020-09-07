@@ -231,6 +231,7 @@ class Trainer(object):
         src_path = '%s_step%d.src' % (self.args.result_path, step)
         f = open(src_path, 'w')
         ##
+        sent_no = 0
         with open(can_path, 'w') as save_pred:
             with open(gold_path, 'w') as save_gold:
                 with torch.no_grad():
@@ -287,13 +288,14 @@ class Trainer(object):
                             pred.append(_pred)
                             gold.append(batch.tgt_str[i])
                             src_fix.append(batch.src_str[i])
+                            sent_no += 1
 
                         for i in range(len(gold)):
-                            save_gold.write(str(i) + ': ' + gold[i].strip() + '\n')
+                            save_gold.write(str(sent_no) + "_" + str(i) + ': ' + gold[i].strip() + '\n')
                         for i in range(len(pred)):
-                            save_pred.write(str(i) + ': ' + pred[i].strip() + '\n')
+                            save_pred.write(str(sent_no) + "_" + str(i) + ': ' + pred[i].strip() + '\n')
                         for i in range(len(pred)):
-                            f.write(str(i) + ': ' + '###'.join(src_fix[i]).strip()+'\n')
+                            f.write(str(sent_no) + "_" + str(i) + ': ' + '###'.join(src_fix[i]).strip()+'\n')
         f.close()
         if (step != -1 and self.args.report_rouge):
             rouges = test_rouge(self.args.temp_dir, can_path, gold_path)

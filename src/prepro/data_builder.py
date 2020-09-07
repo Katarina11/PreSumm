@@ -52,6 +52,34 @@ def load_json(p, lower):
     tgt = [clean(' '.join(sent)).split() for sent in tgt]
     return source, tgt
 
+def load_json_sta(p, lower):
+    source = []
+    tgt = []
+    flag = False
+    # Processing file /content/drive/My Drive/master/croatian/croatian_stories/46556.story ... 
+    # writing to /content/drive/My Drive/master/croatian/merged_stories_tokenized_multilingual/46556.story.json
+
+    # imacemo 2 p, jedan src-000000.txt.json i drugi tgt-000000.txt.json
+    # flag = True za tgt
+# for f in glob.glob(pjoin(args.raw_path, '*.json'))
+    for sent in json.load(open(p))['sentences']:
+        tokens = [t['word'] for t in sent['tokens']]
+        if (lower):
+            tokens = [t.lower() for t in tokens]
+
+        source.append(tokens)
+
+    for sent in json.load(open(p.replace('src', 'tgt')))['sentences']:
+        tokens = [t['word'] for t in sent['tokens']]
+        if (lower):
+            tokens = [t.lower() for t in tokens]
+
+        tgt.append(tokens)
+
+    source = [clean(' '.join(sent)).split() for sent in source]
+    tgt = [clean(' '.join(sent)).split() for sent in tgt]
+    return source, tgt
+
 
 
 def load_xml(p):
@@ -108,6 +136,102 @@ def load_xml(p):
     else:
         return None, None
 
+# {
+#   "docId": "0a0a733db965c3fdf9bc2895104a1ef884a3d593.story",
+#   "sentences": [
+#     {
+#       "index": 0,
+#       "tokens": [
+#         {
+#           "index": 1,
+#           "word": "By",
+#           "originalText": "By",
+#           "characterOffsetBegin": 0,
+#           "characterOffsetEnd": 2,
+#           "before": "",
+#           "after": " \n"
+#         }
+#       ]
+#     },
+#     {
+#       "index": 1,
+#       "tokens": [
+#         {
+#           "index": 1,
+#           "word": "Ryan",
+#           "originalText": "Ryan",
+#           "characterOffsetBegin": 4,
+#           "characterOffsetEnd": 8,
+#           "before": "\n",
+#           "after": " "
+#         },
+#         {
+#           "index": 2,
+#           "word": "Gorman",
+#           "originalText": "Gorman",
+#           "characterOffsetBegin": 9,
+#           "characterOffsetEnd": 15,
+#           "before": " ",
+#           "after": "\n"
+#         }
+#       ]
+#     }
+#       ]
+#     }
+
+def stanford_nlp_tokens_format(args):
+    stories_dir_src = os.path.abspath(args.raw_path)
+    stories_dir_tgt = os.path.abspath(args.raw_path.replace('src', 'tgt'))
+    tokenized_stories_dir = os.path.abspath(args.save_path)
+
+    stories = glob.glob(pjoin(args.raw_path, '*.txt'))
+    stories.extend(glob.glob(pjoin(args.raw_path.replace('src', 'tgt'), '*.txt')))
+
+    print("Tokenizing %i files in %s and %s and saving in %s..." % (len(stories), stories_dir_src, stories_dir_tgt, tokenized_stories_dir))
+
+    for s in stories:
+        real_name = s.split('/')[-1]
+        file_dict = {"docId": real_name, "sentences": []}
+
+        with open(s) as f:
+            lines = f.readlines()
+            
+            index = 0
+            for line in lines: # one line is one sentence
+                tokens = line.strip().split(' ')
+                sentence_object = {"index": index, "tokens": []}
+
+                token_idx = 1
+                for token in tokens:
+                    if token != '':
+                        sentence_object["tokens"].append({
+                            "index": token_idx,
+                            "word": token
+                        })
+                    
+                    token_idx = token_idx + 1
+                
+                file_dict["sentences"].append(sentence_object)
+                index = index + 1
+
+
+            pt_file = "{:s}.{:s}.json".format(args.save_path, real_name)
+            
+            with open(pt_file, 'w') as save:
+                save.write(json.dumps(file_dict))
+                print(pt_file)
+
+
+    # Check that the tokenized stories directory contains the same number of files as the original directory
+    num_orig_src = len(os.listdir(stories_dir_src))
+    num_orig_tgt = len(os.listdir(stories_dir_tgt))
+
+    num_tokenized = len(os.listdir(tokenized_stories_dir))
+    if num_orig_src + num_orig_tgt != num_tokenized:
+        raise Exception(
+            "The tokenized stories directory %s contains %i files, but it should contain the same number as %s (which has %i files). Was there an error during tokenization?" % (
+                tokenized_stories_dir, num_tokenized, stories_dir_src, num_orig))
+    print("Successfully finished tokenizing %s to %s.\n" % (stories_dir_src, tokenized_stories_dir))
 
 def tokenize(args):
     stories_dir = os.path.abspath(args.raw_path)
@@ -397,6 +521,7 @@ def _format_to_lines(params):
     f, args = params
     print(f)
     source, tgt = load_json(f, args.lower)
+    # source, tgt = load_json_sta(f, args.lower)
     return {'src': source, 'tgt': tgt}
 
 
