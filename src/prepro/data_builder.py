@@ -55,13 +55,9 @@ def load_json(p, lower):
 def load_json_sta(p, lower):
     source = []
     tgt = []
-    flag = False
-    # Processing file /content/drive/My Drive/master/croatian/croatian_stories/46556.story ... 
-    # writing to /content/drive/My Drive/master/croatian/merged_stories_tokenized_multilingual/46556.story.json
 
-    # imacemo 2 p, jedan src-000000.txt.json i drugi tgt-000000.txt.json
-    # flag = True za tgt
-# for f in glob.glob(pjoin(args.raw_path, '*.json'))
+    # there are two files, src-000000.txt.json and corresponding tgt-000000.txt.json
+
     for sent in json.load(open(p))['sentences']:
         tokens = [t['word'] for t in sent['tokens']]
         if (lower):
@@ -472,27 +468,33 @@ def _format_to_bert(params):
 
 
 def format_to_lines(args):
-    corpus_mapping = {}
-    for corpus_type in ['valid', 'test', 'train']:
-        temp = []
-        for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
-            temp.append(hashhex(line.strip()))
-            # temp.append(line.strip())
-        corpus_mapping[corpus_type] = {key.strip(): 1 for key in temp}
-    train_files, valid_files, test_files = [], [], []
-    for f in glob.glob(pjoin(args.raw_path, '*.json')):
-        # real_name = f.split('/')[-1].split('.')[0]
-        real_name = f.split('/')[-1].split('.')[0]
-        # print(real_name)
-        if (real_name in corpus_mapping['valid']):
-            valid_files.append(f)
-        elif (real_name in corpus_mapping['test']):
-            test_files.append(f)
-        elif (real_name in corpus_mapping['train']):
-            train_files.append(f)
-        ## ovo else je bilo zakomentarisano
-        else:
-            train_files.append(f)
+    # corpus_mapping = {}
+    # for corpus_type in ['valid', 'test', 'train']:
+    #     temp = []
+    #     for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
+    #         temp.append(hashhex(line.strip()))
+    #         # temp.append(line.strip())
+    #     corpus_mapping[corpus_type] = {key.strip(): 1 for key in temp}
+    # train_files, valid_files, test_files = [], [], []
+    # for f in glob.glob(pjoin(args.raw_path, '*.json')):
+    #     # real_name = f.split('/')[-1].split('.')[0]
+    #     real_name = f.split('/')[-1].split('.')[0]
+    #     # print(real_name)
+    #     if (real_name in corpus_mapping['valid']):
+    #         valid_files.append(f)
+    #     elif (real_name in corpus_mapping['test']):
+    #         test_files.append(f)
+    #     elif (real_name in corpus_mapping['train']):
+    #         train_files.append(f)
+    #     ## ovo else je bilo zakomentarisano
+    #     else:
+    #         train_files.append(f)
+
+    from sklearn.model_selection import train_test_split
+
+    all_files = glob.glob(pjoin(args.raw_path, '*.json'))
+    train_files, valid_files = train_test_split(all_files, test_size=0.05, random_state=42)
+    test_files = []
 
     corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
     for corpus_type in ['train', 'valid', 'test']:
@@ -504,28 +506,41 @@ def format_to_lines(args):
             dataset.append(d)
             if (len(dataset) > args.shard_size):
                 pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
-                with open(pt_file, 'w') as save:
-                    # save.write('\n'.join(dataset))
-                    save.write(json.dumps(dataset))
+                with open(pt_file, 'w', encoding='utf8') as save:
+                    json.dump(dataset, save, ensure_ascii=False)
                     p_ct += 1
                     dataset = []
+                    print('Saving: ', pt_file)
+
+
+                # with open(pt_file, 'w') as save:
+                #     # save.write('\n'.join(dataset))
+                #     save.write(json.dumps(dataset))
+                #     p_ct += 1
+                #     dataset = []
 
         pool.close()
         pool.join()
         if (len(dataset) > 0):
             pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
-            with open(pt_file, 'w') as save:
-                # save.write('\n'.join(dataset))
-                save.write(json.dumps(dataset))
+
+            with open(pt_file, 'w', encoding='utf8') as save:
+                json.dump(dataset, save, ensure_ascii=False)
                 p_ct += 1
                 dataset = []
+                print('Saving: ', pt_file)
+
+            # with open(pt_file, 'w') as save:
+            #     save.write(json.dumps(dataset))
+            #     p_ct += 1
+            #     dataset = []
 
 
 def _format_to_lines(params):
     f, args = params
     print(f)
-    source, tgt = load_json(f, args.lower)
-    # source, tgt = load_json_sta(f, args.lower)
+    # source, tgt = load_json(f, args.lower)
+    source, tgt = load_json_sta(f, args.lower)
     return {'src': source, 'tgt': tgt}
 
 

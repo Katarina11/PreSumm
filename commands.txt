@@ -6,6 +6,7 @@ python preprocess.py -mode stanford_nlp_tokens_format \
 -log_file ~/local/sta_dataset/logs.txt
 
 # Step 4. Format to Simpler Json Files
+promijenila si load_json funkciju i zakomentarisala u format_to_lines
 python preprocess.py \
 -mode format_to_lines \
 -raw_path ~/local/sta_dataset/merged_stories_tokenized \
@@ -17,6 +18,7 @@ python preprocess.py \
 
 u data_builder si dodala is_test = True, pazi se toga!!!!
 # Step 5. Format to PyTorch Files
+
 python ~/local/BertSumm/src/preprocess.py \
 -mode format_to_bert \
 -raw_path ~/local/croatian/json_data_multilingual \
