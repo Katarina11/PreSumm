@@ -13,8 +13,7 @@ python preprocess.py \
 -save_path ~/local/sta_dataset/json_data/sta \
 -n_cpus 1 \
 -use_bert_basic_tokenizer false \
--log_file ~/local/sta_dataset/logs.txt \
--map_path ~/local/BertSumm/urls
+-log_file ~/local/sta_dataset/logs.txt
 
 u data_builder si dodala is_test = True, pazi se toga!!!!
 # Step 5. Format to PyTorch Files

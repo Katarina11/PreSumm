@@ -490,12 +490,13 @@ def format_to_lines(args):
     #     else:
     #         train_files.append(f)
 
+    ########
     from sklearn.model_selection import train_test_split
 
-    all_files = glob.glob(pjoin(args.raw_path, '*.json'))
+    all_files = glob.glob(pjoin(args.raw_path, 'src-*'))
     train_files, valid_files = train_test_split(all_files, test_size=0.05, random_state=42)
     test_files = []
-
+    ########
     corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
     for corpus_type in ['train', 'valid', 'test']:
         a_lst = [(f, args) for f in corpora[corpus_type]]
