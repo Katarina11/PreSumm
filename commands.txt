@@ -2,7 +2,7 @@
 
 python preprocess.py -mode stanford_nlp_tokens_format \
 -raw_path  ~/local/sta-news-split/src \
--save_path ~/local/sta_dataset/merged_stories_tokenized/sta \
+-save_path ~/local/sta_dataset/merged_stories_tokenized \
 -log_file ~/local/sta_dataset/logs.txt
 
 # Step 4. Format to Simpler Json Files

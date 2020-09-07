@@ -215,12 +215,12 @@ def stanford_nlp_tokens_format(args):
                 index = index + 1
 
 
-            pt_file = "{:s}.{:s}.json".format(args.save_path, real_name)
+            pt_file = "{:s}/{:s}.json".format(args.save_path, real_name)
             
             # with open(pt_file, 'w') as save:
             #     save.write(json.dumps(file_dict))
             #     print(pt_file)
-            
+
             with open(pt_file, 'w', encoding='utf8') as save:
                 json.dump(file_dict, save, ensure_ascii=False)
                 print(pt_file)
