@@ -188,7 +188,8 @@ def validate(args, device_id, pt, step):
 
     tokenizer = BertTokenizer.from_pretrained(args.use_this_bert, do_lower_case=True, cache_dir=args.temp_dir)
 
-    if(args.use_this_bert == 'bert-base-multilingual-uncased'):
+    if(args.use_this_bert == 'bert-base-multilingual-uncased' or 
+        args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2'):
         symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                 'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     else:
@@ -226,7 +227,8 @@ def test_abs(args, device_id, pt, step):
 
     tokenizer = BertTokenizer.from_pretrained(args.use_this_bert, do_lower_case=True, cache_dir=args.temp_dir)
 
-    if(args.use_this_bert == 'bert-base-multilingual-uncased'):
+    if(args.use_this_bert == 'bert-base-multilingual-uncased' or
+        args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2'):
         symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                 'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     else:
@@ -260,7 +262,8 @@ def test_text_abs(args, device_id, pt, step):
                                        shuffle=False, is_test=True)
     tokenizer = BertTokenizer.from_pretrained(args.use_this_bert, do_lower_case=True, cache_dir=args.temp_dir)
 
-    if(args.use_this_bert == 'bert-base-multilingual-uncased'):
+    if(args.use_this_bert == 'bert-base-multilingual-uncased' or
+        args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2'):
         symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                 'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     else:
@@ -342,7 +345,8 @@ def train_abs_single(args, device_id):
 
     tokenizer = BertTokenizer.from_pretrained(args.use_this_bert, do_lower_case=True, cache_dir=args.temp_dir)
 
-    if(args.use_this_bert == 'bert-base-multilingual-uncased'):
+    if(args.use_this_bert == 'bert-base-multilingual-uncased' or 
+        args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2'):
         symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                 'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     else:

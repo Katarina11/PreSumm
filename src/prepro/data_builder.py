@@ -342,7 +342,8 @@ class BertData():
         self.sep_token = '[SEP]'
         self.cls_token = '[CLS]'
         self.pad_token = '[PAD]'
-        if args.use_this_bert == 'bert-base-multilingual-uncased':
+        if args.use_this_bert == 'bert-base-multilingual-uncased' or 
+            args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
             self.tgt_bos = '[unused1]'
             self.tgt_eos = '[unused2]'
             self.tgt_sent_split = '[unused3]'
@@ -393,7 +394,8 @@ class BertData():
         cls_ids = [i for i, t in enumerate(src_subtoken_idxs) if t == self.cls_vid]
         sent_labels = sent_labels[:len(cls_ids)]
 
-        if self.args.use_this_bert == 'bert-base-multilingual-uncased':
+        if self.args.use_this_bert == 'bert-base-multilingual-uncased' or
+            self.args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
             tgt_subtokens_str = '[unused1] ' + ' [unused3] '.join(
                 [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused2]'
         else:

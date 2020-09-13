@@ -1,5 +1,10 @@
 # Step 3. Sentence Splitting and Tokenization
 
+cd ~/local/PreSumm/stanford-corenlp-full-2018-10-05
+
+export PATH=$PATH:/home/kmilacic/jre1.8.0_261/bin
+export PATH=$PATH:/home/kmilacic/.local/bin
+
 python preprocess.py -mode stanford_nlp_tokens_format \
 -raw_path  ~/local/sta-news-split/src \
 -save_path ~/local/sta_dataset/merged_stories_tokenized \
@@ -18,10 +23,49 @@ python preprocess.py \
 u data_builder si dodala is_test = True, pazi se toga!!!!
 # Step 5. Format to PyTorch Files
 
-python ~/local/BertSumm/src/preprocess.py \
+python preprocess.py \
 -mode format_to_bert \
--raw_path ~/local/croatian/json_data_multilingual \
--save_path ~/local/croatian/bert_data_eng_uncased \
+-raw_path ~/local/sta_dataset/json_data \
+-save_path ~/local/sta_dataset/bert_data_crosloengual \
 -lower -n_cpus 1 \
--log_file ~/local/croatian/preprocess.log \
--use_this_bert ../crosloengual
+-log_file ~/local/sta_dataset/logs.txt \
+-use_this_bert ../../crosloengual
+
+/home/kmilacic/local/BertSumm/logs/validation_multilingual
+
+# rename files
+find . -name '*pt' -exec bash -c ' mv $0 ${0/sta/mix}' {} \;
+
+#delete files
+find . -maxdepth 1 -name "*.json" -print0 | xargs -0 rm
+
+https://drive.google.com/file/d/1y4pfAfYvATpxMFkJcXi64HUBQOFG8ZuQ/view?usp=sharing
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet \
+--save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate \
+'https://docs.google.com/uc?export=download&id=1DN7ClZCCXsk2KegmC6t4ClBwtAf5galI' -O- | sed -rn \
+'s/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1DN7ClZCCXsk2KegmC6t4ClBwtAf5galI" -O bert_data_cnndm_final.zip \
+&& rm -rf /tmp/cookies.txt
+
+
+########### BERT FINETUNING
+
+pip install pytorch_transformers
+
+!python generate_bert_txt.py
+
+!python pregenerate_training_data.py \
+--train_corpus sample-1.txt \
+--bert_model 'bert-base-multilingual-uncased' \
+--do_lower_case \
+--output_dir training-sample/ \
+--epochs_to_generate 2 \
+--max_seq_len 256
+
+!python finetune_on_pregenerated.py \
+--pregenerated_data training-sample/ \
+--bert_model 'bert-base-multilingual-uncased' \
+--do_lower_case \
+--output_dir finetuned_lm-sample/ \
+--epochs 2 \
+--train_batch_size 16
