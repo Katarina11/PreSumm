@@ -152,8 +152,7 @@ class Translator(object):
                 for trans in translations:
                     pred, gold, src = trans
                     if len(src.strip().replace(' ##','')) > 250:
-                        if self.args.use_this_bert == 'bert-base-multilingual-uncased' or
-                            self.args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
+                        if self.args.use_this_bert == 'bert-base-multilingual-uncased' or self.args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
                             pred_str = pred.replace('[unused1]', '').replace('[unused4]', '').replace('[PAD]', '').replace('[unused2]', '').replace(r' +', ' ').replace(' [unused3] ', '<q>').replace('[unused3]', '').strip()
                         else:
                             pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').strip()
