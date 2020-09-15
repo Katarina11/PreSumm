@@ -194,6 +194,9 @@ class Translator(object):
 
         if (step != -1):
             rouges = self._report_rouge(gold_path, can_path)
+            try_rouge = codecs.open(self.args.result_path + '.%d.rouge' % step, 'w', 'utf-8')
+            try_rouge.flush()
+            try_rouge.close()
             self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
             if self.tensorboard_writer is not None:
                 self.tensorboard_writer.add_scalar('test/rouge1-F', rouges['rouge_1_f_score'], step)
