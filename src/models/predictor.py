@@ -130,6 +130,11 @@ class Translator(object):
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
         self.can_out_file = codecs.open(can_path, 'w', 'utf-8')
 
+        ## with sent num order
+        self.gold_out_file_2 = codecs.open(self.args.result_path + '.%d.gold_2' % step, 'w', 'utf-8')
+        self.can_out_file_2 = codecs.open(self.args.result_path + '.%d.candidate_2' % step, 'w', 'utf-8')
+        ##
+
         # raw_gold_path = self.args.result_path + '.%d.raw_gold' % step
         # raw_can_path = self.args.result_path + '.%d.raw_candidate' % step
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
@@ -180,9 +185,12 @@ class Translator(object):
                         print('pred', pred_str)
                         print('\n')
                         # print('gold_str', gold_str)
-                        self.can_out_file.write(str(ct) + ': ' + pred_str + '\n')
-                        self.gold_out_file.write(str(ct) + ': ' + gold_str + '\n')
+                        self.can_out_file_2.write(str(ct) + ': ' + pred_str + '\n')
+                        self.gold_out_file_2.write(str(ct) + ': ' + gold_str + '\n')
                         self.src_out_file.write(str(ct) + ': ' + src.strip().replace(' ##','') + '\n')
+                        self.can_out_file.write(pred_str + '\n')
+                        self.gold_out_file.write(gold_str + '\n')
+                        # self.src_out_file.write(src.strip() + '\n')
                         ct += 1
                 self.can_out_file.flush()
                 self.gold_out_file.flush()
