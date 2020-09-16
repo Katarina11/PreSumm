@@ -4,7 +4,7 @@ from __future__ import print_function
 import codecs
 import os
 import math
-
+import json
 import torch
 
 from tensorboardX import SummaryWriter
@@ -203,6 +203,7 @@ class Translator(object):
         if (step != -1):
             rouges = self._report_rouge(gold_path, can_path)
             try_rouge = codecs.open(self.args.result_path + '.%d.rouge' % step, 'w', 'utf-8')
+            try_rouge.write(json.dumps(rouges))
             try_rouge.flush()
             try_rouge.close()
             self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))

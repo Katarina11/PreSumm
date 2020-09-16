@@ -494,8 +494,8 @@ def format_to_lines(args):
     from sklearn.model_selection import train_test_split
 
     all_files = glob.glob(pjoin(args.raw_path, 'src-*'))
-    train_files, valid_files = train_test_split(all_files, test_size=0.05, random_state=42)
-    test_files = []
+    train_plus_valid, test_files = train_test_split(all_files, test_size=0.03, random_state=42)
+    train_files, valid_files = train_test_split(train_plus_valid, test_size=0.035, random_state=42) # 0.035 x 0.97 = 0.03395
     ########
     corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
     for corpus_type in ['train', 'valid', 'test']:
