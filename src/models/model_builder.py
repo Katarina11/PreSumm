@@ -15,7 +15,7 @@ def build_optim(args, model, checkpoint):
     if checkpoint is not None:
         print(checkpoint.keys())
         if args.task == 'ext':
-            optim = checkpoint['optim']
+            optim = checkpoint['optims']
         else:
             optim = checkpoint['optims'][0]
         saved_optimizer_state_dict = optim.optimizer.state_dict()
