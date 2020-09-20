@@ -20,7 +20,7 @@ def build_optim(model, opt, checkpoint):
     saved_optimizer_state_dict = None
 
     if opt.train_from:
-        optim = checkpoint['optim']
+        optim = checkpoint['optims']
         # We need to save a copy of optim.optimizer.state_dict() for setting
         # the, optimizer state later on in Stage 2 in this method, since
         # the method optim.set_parameters(model.parameters()) will overwrite
