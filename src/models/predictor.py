@@ -184,6 +184,7 @@ class Translator(object):
                         # print('src', src.strip().replace(' ##',''))
                         # print('pred', pred_str)
                         # print('\n')
+                        print(ct)
                         # print('gold_str', gold_str)
                         self.can_out_file_2.write(str(ct) + ': ' + pred_str + '\n')
                         self.gold_out_file_2.write(str(ct) + ': ' + gold_str + '\n')
