@@ -254,8 +254,10 @@ class Trainer(object):
                                             range(batch.batch_size)]
                         else:
                             sent_scores, mask = self.model(src, segs, clss, mask, mask_cls)
-
-                            loss = self.loss(sent_scores, labels.float())
+                            if labels.float().size()[1] != 0:
+                                loss = self.loss(sent_scores, labels.float())
+                            else:
+                                continue
                             loss = (loss * mask.float()).sum()
                             batch_stats = Statistics(float(loss.cpu().data.numpy()), len(labels))
                             stats.update(batch_stats)
@@ -263,6 +265,9 @@ class Trainer(object):
                             sent_scores = sent_scores + mask.float()
                             sent_scores = sent_scores.cpu().data.numpy()
                             selected_ids = np.argsort(-sent_scores, 1)
+
+                            if len(selected_ids[0]) < 7:
+                                continue
                         # selected_ids = np.sort(selected_ids,1)
                         for i, idx in enumerate(selected_ids):
                             _pred = []
@@ -289,6 +294,10 @@ class Trainer(object):
                             gold.append(batch.tgt_str[i])
                             src_fix.append(batch.src_str[i])
                             sent_no += 1
+                            # print(sent_no)
+
+                        # print('gold', gold)
+                        # print(gold_path)
 
                         for i in range(len(gold)):
                             save_gold.write(str(sent_no) + "_" + str(i) + ': ' + gold[i].strip() + '\n')
