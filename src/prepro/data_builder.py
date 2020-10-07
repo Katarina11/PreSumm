@@ -176,14 +176,17 @@ def load_xml(p):
 #     }
 
 def stanford_nlp_tokens_format(args):
-    stories_dir_src = os.path.abspath(args.raw_path)
-    stories_dir_tgt = os.path.abspath(args.raw_path.replace('src', 'tgt'))
+    # stories_dir_src = os.path.abspath(args.raw_path)
+    # stories_dir_tgt = os.path.abspath(args.raw_path.replace('src', 'tgt'))
     tokenized_stories_dir = os.path.abspath(args.save_path)
 
-    stories = glob.glob(pjoin(args.raw_path, '*.txt'))
-    stories.extend(glob.glob(pjoin(args.raw_path.replace('src', 'tgt'), '*.txt')))
+    # stories = glob.glob(pjoin(args.raw_path, '*.txt'))
+    # stories.extend(glob.glob(pjoin(args.raw_path.replace('src', 'tgt'), '*.txt')))
 
-    print("Tokenizing %i files in %s and %s and saving in %s..." % (len(stories), stories_dir_src, stories_dir_tgt, tokenized_stories_dir))
+    # print("Tokenizing %i files in %s and %s and saving in %s..." % (len(stories), stories_dir_src, stories_dir_tgt, tokenized_stories_dir))
+
+    stories_dir = os.path.abspath(args.raw_path)
+    stories = os.listdir(stories_dir)
 
     for s in stories:
         real_name = s.split('/')[-1]
@@ -194,21 +197,22 @@ def stanford_nlp_tokens_format(args):
             
             index = 0
             for line in lines: # one line is one sentence
-                tokens = line.strip().split(' ')
-                sentence_object = {"index": index, "tokens": []}
+                if line.strip() != '':
+                    tokens = line.strip().split(' ')
+                    sentence_object = {"index": index, "tokens": []}
 
-                token_idx = 1
-                for token in tokens:
-                    if token != '':
-                        sentence_object["tokens"].append({
-                            "index": token_idx,
-                            "word": token
-                        })
+                    token_idx = 1
+                    for token in tokens:
+                        if token != '':
+                            sentence_object["tokens"].append({
+                                "index": token_idx,
+                                "word": token
+                            })
+                        
+                        token_idx = token_idx + 1
                     
-                    token_idx = token_idx + 1
-                
-                file_dict["sentences"].append(sentence_object)
-                index = index + 1
+                    file_dict["sentences"].append(sentence_object)
+                    index = index + 1
 
 
             pt_file = "{:s}/{:s}.json".format(args.save_path, real_name)
@@ -223,15 +227,15 @@ def stanford_nlp_tokens_format(args):
 
 
     # Check that the tokenized stories directory contains the same number of files as the original directory
-    num_orig_src = len(os.listdir(stories_dir_src))
-    num_orig_tgt = len(os.listdir(stories_dir_tgt))
+    # num_orig_src = len(os.listdir(stories_dir_src))
+    # num_orig_tgt = len(os.listdir(stories_dir_tgt))
 
-    num_tokenized = len(os.listdir(tokenized_stories_dir))
-    if num_orig_src + num_orig_tgt != num_tokenized:
-        raise Exception(
-            "The tokenized stories directory %s contains %i files, but it should contain the same number as %s (which has %i files). Was there an error during tokenization?" % (
-                tokenized_stories_dir, num_tokenized, stories_dir_src, num_orig))
-    print("Successfully finished tokenizing %s to %s.\n" % (stories_dir_src, tokenized_stories_dir))
+    # num_tokenized = len(os.listdir(tokenized_stories_dir))
+    # if num_orig_src + num_orig_tgt != num_tokenized:
+        # raise Exception(
+            # "The tokenized stories directory %s contains %i files, but it should contain the same number as %s (which has %i files). Was there an error during tokenization?" % (
+                # tokenized_stories_dir, num_tokenized, stories_dir_src, num_orig))
+    # print("Successfully finished tokenizing %s to %s.\n" % (stories_dir_src, tokenized_stories_dir))
 
 def tokenize(args):
     stories_dir = os.path.abspath(args.raw_path)
