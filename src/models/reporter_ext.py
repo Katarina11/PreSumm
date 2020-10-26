@@ -155,6 +155,11 @@ class ReportMgr(ReportMgrBase):
                                        "valid",
                                        lr,
                                        step)
+            
+            # f = open("/home/kmilacic/local/ext_models/validation", "a")
+            # f.write('Validation xent: %g at step %d' % (valid_stats.xent(), step))
+            # f.write('\n')
+            # f.close()
 
 
 class Statistics(object):

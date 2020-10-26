@@ -4,7 +4,7 @@ from __future__ import print_function
 import codecs
 import os
 import math
-
+import json
 import torch
 
 from tensorboardX import SummaryWriter
@@ -112,7 +112,7 @@ class Translator(object):
             #                           attn[b], pred_score[b], gold_sent,
             #                           gold_score[b])
             # src = self.spm.DecodeIds([int(t) for t in translation_batch['batch'].src[0][5] if int(t) != len(self.spm)])
-            raw_src = [self.vocab.ids_to_tokens[int(t)] for t in src[b]][:500]
+            raw_src = [self.vocab.ids_to_tokens[int(t)] for t in src[b]][:500] ## FIX  if t!=0
             raw_src = ' '.join(raw_src)
             translation = (pred_sents, gold_sent, raw_src)
             # translation = (pred_sents[0], gold_sent)
@@ -129,6 +129,11 @@ class Translator(object):
         can_path = self.args.result_path + '.%d.candidate' % step
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
         self.can_out_file = codecs.open(can_path, 'w', 'utf-8')
+
+        ## with sent num order
+        self.gold_out_file_2 = codecs.open(self.args.result_path + '.%d.gold_2' % step, 'w', 'utf-8')
+        self.can_out_file_2 = codecs.open(self.args.result_path + '.%d.candidate_2' % step, 'w', 'utf-8')
+        ##
 
         # raw_gold_path = self.args.result_path + '.%d.raw_gold' % step
         # raw_can_path = self.args.result_path + '.%d.raw_candidate' % step
@@ -151,31 +156,43 @@ class Translator(object):
 
                 for trans in translations:
                     pred, gold, src = trans
-                    pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').strip()
-                    gold_str = gold.strip()
-                    if(self.args.recall_eval):
-                        _pred_str = ''
-                        gap = 1e3
-                        for sent in pred_str.split('<q>'):
-                            can_pred_str = _pred_str+ '<q>'+sent.strip()
-                            can_gap = math.fabs(len(_pred_str.split())-len(gold_str.split()))
-                            # if(can_gap>=gap):
-                            if(len(can_pred_str.split())>=len(gold_str.split())+10):
-                                pred_str = _pred_str
-                                break
-                            else:
-                                gap = can_gap
-                                _pred_str = can_pred_str
+                    if len(src.strip().replace(' ##','')) > 250:
+                        if self.args.use_this_bert == 'bert-base-multilingual-uncased' or self.args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
+                            pred_str = pred.replace('[unused1]', '').replace('[unused4]', '').replace('[PAD]', '').replace('[unused2]', '').replace(r' +', ' ').replace(' [unused3] ', '<q>').replace('[unused3]', '').replace(' [EOS] ', '').replace('[EOS]', '').strip()
+                        else:
+                            pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').replace(' [EOS] ', '').replace('[EOS]', '').replace(' [unused00] ','').replace('[unused00]','').strip()
+                        gold_str = gold.strip()
+                        if(self.args.recall_eval):
+                            _pred_str = ''
+                            gap = 1e3
+                            for sent in pred_str.split('<q>'):
+                                can_pred_str = _pred_str+ '<q>'+sent.strip()
+                                can_gap = math.fabs(len(_pred_str.split())-len(gold_str.split()))
+                                # if(can_gap>=gap):
+                                if(len(can_pred_str.split())>=len(gold_str.split())+10):
+                                    pred_str = _pred_str
+                                    break
+                                else:
+                                    gap = can_gap
+                                    _pred_str = can_pred_str
 
 
 
-                        # pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
-                    # self.raw_can_out_file.write(' '.join(pred).strip() + '\n')
-                    # self.raw_gold_out_file.write(' '.join(gold).strip() + '\n')
-                    self.can_out_file.write(pred_str + '\n')
-                    self.gold_out_file.write(gold_str + '\n')
-                    self.src_out_file.write(src.strip() + '\n')
-                    ct += 1
+                            # pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
+                        # self.raw_can_out_file.write(' '.join(pred).strip() + '\n')
+                        # self.raw_gold_out_file.write(' '.join(gold).strip() + '\n')
+                        # print('src', src.strip().replace(' ##',''))
+                        # print('pred', pred_str)
+                        # print('\n')
+                        print(ct)
+                        # print('gold_str', gold_str)
+                        self.can_out_file_2.write(str(ct) + ': ' + pred_str + '\n')
+                        self.gold_out_file_2.write(str(ct) + ': ' + gold_str + '\n')
+                        self.src_out_file.write(str(ct) + ': ' + src.strip().replace(' ##','') + '\n')
+                        self.can_out_file.write(pred_str + '\n')
+                        self.gold_out_file.write(gold_str + '\n')
+                        # self.src_out_file.write(src.strip() + '\n')
+                        ct += 1
                 self.can_out_file.flush()
                 self.gold_out_file.flush()
                 self.src_out_file.flush()
@@ -186,6 +203,10 @@ class Translator(object):
 
         if (step != -1):
             rouges = self._report_rouge(gold_path, can_path)
+            try_rouge = codecs.open(self.args.result_path + '.%d.rouge' % step, 'w', 'utf-8')
+            try_rouge.write(json.dumps(rouges))
+            try_rouge.flush()
+            try_rouge.close()
             self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
             if self.tensorboard_writer is not None:
                 self.tensorboard_writer.add_scalar('test/rouge1-F', rouges['rouge_1_f_score'], step)
@@ -231,8 +252,10 @@ class Translator(object):
         src = batch.src
         segs = batch.segs
         mask_src = batch.mask_src
-
+        # print('batch.src', src)
         src_features = self.model.bert(src, segs, mask_src)
+        # print('self.model.bert', self.model.bert)
+        # print('src_features~~', src_features)
         dec_states = self.model.decoder.init_decoder_state(src, src_features, with_cache=True)
         device = src_features.device
 
@@ -299,7 +322,10 @@ class Translator(object):
                     for i in range(alive_seq.size(0)):
                         fail = False
                         words = [int(w) for w in alive_seq[i]]
-                        words = [self.vocab.ids_to_tokens[w] for w in words]
+                        # print('words', words)
+                        # print('self.vocab.ids_to_tokens', self.vocab.ids_to_tokens)
+                        words = [self.vocab.ids_to_tokens[w] for w in words] ## FIX  if w != 0
+                        # print('w', words)
                         words = ' '.join(words).replace(' ##','').split()
                         if(len(words)<=3):
                             continue
@@ -372,7 +398,7 @@ class Translator(object):
             src_features = src_features.index_select(0, select_indices)
             dec_states.map_batch_fn(
                 lambda state, dim: state.index_select(dim, select_indices))
-
+        # print('RESULTS!!', results)
         return results
 
 

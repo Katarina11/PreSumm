@@ -13,7 +13,11 @@ def build_optim(args, model, checkpoint):
     """ Build optimizer """
 
     if checkpoint is not None:
-        optim = checkpoint['optim'][0]
+        print(checkpoint.keys())
+        if args.task == 'ext':
+            optim = checkpoint['optims']
+        else:
+            optim = checkpoint['optims'][0]
         saved_optimizer_state_dict = optim.optimizer.state_dict()
         optim.optimizer.load_state_dict(saved_optimizer_state_dict)
         if args.visible_gpus != '-1':
@@ -113,14 +117,33 @@ def get_generator(vocab_size, dec_hidden_size, device):
     return generator
 
 class Bert(nn.Module):
-    def __init__(self, large, temp_dir, finetune=False):
+    def __init__(self, large, temp_dir, finetune=False, use_this_bert=None):
         super(Bert, self).__init__()
+        print('Bert initializing', large)
         if(large):
-            self.model = BertModel.from_pretrained('bert-large-uncased', cache_dir=temp_dir)
+            self.model = BertModel.from_pretrained(use_this_bert, cache_dir=temp_dir )
+            # config = BertConfig.from_pretrained('../../crosloengual')
+            # config.vocab_size = 30522
+            ##
+            # self.model = BertModel.from_pretrained('../../crosloengual', cache_dir=temp_dir, config=config)
+            # self.model.resize_token_embeddings(30522)
         else:
-            self.model = BertModel.from_pretrained('bert-base-uncased', cache_dir=temp_dir)
-
+            # self.model = BertModel.from_pretrained('bert-base-uncased', cache_dir=temp_dir)
+            self.model = BertModel.from_pretrained(use_this_bert, cache_dir=temp_dir )
+            ##
+            # config = BertConfig.from_pretrained('../../crosloengual')
+            # config.vocab_size = 30522
+            ##
+            # self.model = BertModel.from_pretrained('../../crosloengual', cache_dir=temp_dir, config=config)
+            # print('!!!!!!!', dir(self.model))
+            # print(type(self.model))
+            # self.model.tie_weights()
+            # import inspect
+            # print('###', inspect.getmodule(BertModel))
+            # self.model.resize_token_embeddings(30522)
+            # self.model.tie_weights()
         self.finetune = finetune
+        print('finetune', finetune)
 
     def forward(self, x, segs, mask):
         if(self.finetune):
@@ -137,7 +160,7 @@ class ExtSummarizer(nn.Module):
         super(ExtSummarizer, self).__init__()
         self.args = args
         self.device = device
-        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert)
+        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert, args.use_this_bert)
 
         self.ext_layer = ExtTransformerEncoder(self.bert.model.config.hidden_size, args.ext_ff_size, args.ext_heads,
                                                args.ext_dropout, args.ext_layers)
@@ -180,8 +203,8 @@ class AbsSummarizer(nn.Module):
         super(AbsSummarizer, self).__init__()
         self.args = args
         self.device = device
-        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert)
-
+        self.bert = Bert(args.large, args.temp_dir, args.finetune_bert, args.use_this_bert)
+        print('args', args)
         if bert_from_extractive is not None:
             self.bert.model.load_state_dict(
                 dict([(n[11:], p) for n, p in bert_from_extractive.items() if n.startswith('bert.model')]), strict=True)
@@ -211,9 +234,34 @@ class AbsSummarizer(nn.Module):
 
         self.generator = get_generator(self.vocab_size, self.args.dec_hidden_size, device)
         self.generator[0].weight = self.decoder.embeddings.weight
+        # print('self.generator', self.generator)
+        # print('self.generator[0[', self.generator[0])
 
 
         if checkpoint is not None:
+            #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            src_path2 = '%s_step.src' % (self.args.result_path)
+            f2 = open(src_path2, 'w')
+            for k in checkpoint['model'].keys():
+                f2.write(k)
+                f2.write('\n')
+            f2.close()
+            # pretrained_dict = {k: v for k, v in checkpoint['model'].items() if k not in 
+            # ['bert.model.embeddings.word_embeddings.weight', 'decoder.embeddings.weight', 'generator.0.weight', 'generator.0.bias']
+            #     and not k.startswith('bert.model')
+            # }
+            # model_dict = self.state_dict()
+            # model_dict.update(pretrained_dict)
+            # self.load_state_dict(model_dict)
+            # checkpoint = {
+            #     'model': self.state_dict(),
+            #     'opt': checkpoint['opt'], #self.args,
+            #     'optim': checkpoint['optims']#self.optims,
+            # }
+            # print('checkpoint saved!!!#!')
+            # torch.save(checkpoint, './new_checkpoint_3.pt')
+            # print('optims', checkpoint['optims'][0], checkpoint['optims'][1])
+            #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             self.load_state_dict(checkpoint['model'], strict=True)
         else:
             for module in self.decoder.modules():
@@ -239,6 +287,7 @@ class AbsSummarizer(nn.Module):
 
     def forward(self, src, tgt, segs, clss, mask_src, mask_tgt, mask_cls):
         top_vec = self.bert(src, segs, mask_src)
+        # print('src!!!!!', src)
         dec_state = self.decoder.init_decoder_state(src, top_vec)
         decoder_outputs, state = self.decoder(tgt[:, :-1], top_vec, dec_state)
         return decoder_outputs, None

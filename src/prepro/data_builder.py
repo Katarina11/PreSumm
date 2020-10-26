@@ -52,6 +52,30 @@ def load_json(p, lower):
     tgt = [clean(' '.join(sent)).split() for sent in tgt]
     return source, tgt
 
+def load_json_sta(p, lower):
+    source = []
+    tgt = []
+
+    # there are two files, src-000000.txt.json and corresponding tgt-000000.txt.json
+
+    for sent in json.load(open(p))['sentences']:
+        tokens = [t['word'] for t in sent['tokens']]
+        if (lower):
+            tokens = [t.lower() for t in tokens]
+
+        source.append(tokens)
+
+    for sent in json.load(open(p.replace('src', 'tgt')))['sentences']:
+        tokens = [t['word'] for t in sent['tokens']]
+        if (lower):
+            tokens = [t.lower() for t in tokens]
+
+        tgt.append(tokens)
+
+    source = [clean(' '.join(sent)).split() for sent in source]
+    tgt = [clean(' '.join(sent)).split() for sent in tgt]
+    return source, tgt
+
 
 
 def load_xml(p):
@@ -98,14 +122,120 @@ def load_xml(p):
             break
     if (len(paras) > 0):
         if (len(byline) > 0):
-            paras = [title + ['[unused3]'] + byline + ['[unused4]']] + paras
+            # paras = [title + ['[unused3]'] + byline + ['[unused4]']] + paras
+            paras = [title + ['[unused4]'] + byline + ['[unused5]']] + paras
         else:
-            paras = [title + ['[unused3]']] + paras
+            # paras = [title + ['[unused3]']] + paras
+            paras = [title + ['[unused4]']] + paras
 
         return paras, abs
     else:
         return None, None
 
+# {
+#   "docId": "0a0a733db965c3fdf9bc2895104a1ef884a3d593.story",
+#   "sentences": [
+#     {
+#       "index": 0,
+#       "tokens": [
+#         {
+#           "index": 1,
+#           "word": "By",
+#           "originalText": "By",
+#           "characterOffsetBegin": 0,
+#           "characterOffsetEnd": 2,
+#           "before": "",
+#           "after": " \n"
+#         }
+#       ]
+#     },
+#     {
+#       "index": 1,
+#       "tokens": [
+#         {
+#           "index": 1,
+#           "word": "Ryan",
+#           "originalText": "Ryan",
+#           "characterOffsetBegin": 4,
+#           "characterOffsetEnd": 8,
+#           "before": "\n",
+#           "after": " "
+#         },
+#         {
+#           "index": 2,
+#           "word": "Gorman",
+#           "originalText": "Gorman",
+#           "characterOffsetBegin": 9,
+#           "characterOffsetEnd": 15,
+#           "before": " ",
+#           "after": "\n"
+#         }
+#       ]
+#     }
+#       ]
+#     }
+
+def stanford_nlp_tokens_format(args):
+    # stories_dir_src = os.path.abspath(args.raw_path)
+    # stories_dir_tgt = os.path.abspath(args.raw_path.replace('src', 'tgt'))
+    tokenized_stories_dir = os.path.abspath(args.save_path)
+
+    # stories = glob.glob(pjoin(args.raw_path, '*.txt'))
+    # stories.extend(glob.glob(pjoin(args.raw_path.replace('src', 'tgt'), '*.txt')))
+
+    # print("Tokenizing %i files in %s and %s and saving in %s..." % (len(stories), stories_dir_src, stories_dir_tgt, tokenized_stories_dir))
+
+    stories_dir = os.path.abspath(args.raw_path)
+    stories = os.listdir(stories_dir)
+
+    for s in stories:
+        real_name = s.split('/')[-1]
+        file_dict = {"docId": real_name, "sentences": []}
+
+        with open(s) as f:
+            lines = f.readlines()
+            
+            index = 0
+            for line in lines: # one line is one sentence
+                if line.strip() != '':
+                    tokens = line.strip().split(' ')
+                    sentence_object = {"index": index, "tokens": []}
+
+                    token_idx = 1
+                    for token in tokens:
+                        if token != '':
+                            sentence_object["tokens"].append({
+                                "index": token_idx,
+                                "word": token
+                            })
+                        
+                        token_idx = token_idx + 1
+                    
+                    file_dict["sentences"].append(sentence_object)
+                    index = index + 1
+
+
+            pt_file = "{:s}/{:s}.json".format(args.save_path, real_name)
+            
+            # with open(pt_file, 'w') as save:
+            #     save.write(json.dumps(file_dict))
+            #     print(pt_file)
+
+            with open(pt_file, 'w', encoding='utf8') as save:
+                json.dump(file_dict, save, ensure_ascii=False)
+                print(pt_file)
+
+
+    # Check that the tokenized stories directory contains the same number of files as the original directory
+    # num_orig_src = len(os.listdir(stories_dir_src))
+    # num_orig_tgt = len(os.listdir(stories_dir_tgt))
+
+    # num_tokenized = len(os.listdir(tokenized_stories_dir))
+    # if num_orig_src + num_orig_tgt != num_tokenized:
+        # raise Exception(
+            # "The tokenized stories directory %s contains %i files, but it should contain the same number as %s (which has %i files). Was there an error during tokenization?" % (
+                # tokenized_stories_dir, num_tokenized, stories_dir_src, num_orig))
+    # print("Successfully finished tokenizing %s to %s.\n" % (stories_dir_src, tokenized_stories_dir))
 
 def tokenize(args):
     stories_dir = os.path.abspath(args.raw_path)
@@ -115,18 +245,21 @@ def tokenize(args):
     stories = os.listdir(stories_dir)
     # make IO list file
     print("Making list of files to tokenize...")
+    print('cwd',os.getcwd())
     with open("mapping_for_corenlp.txt", "w") as f:
         for s in stories:
             if (not s.endswith('story')):
                 continue
-            f.write("%s\n" % (os.path.join(stories_dir, s)))
-    command = ['java', 'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
-               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', 'mapping_for_corenlp.txt', '-outputFormat',
+            f.write("%s\n" % (os.path.join(stories_dir, s))) #"'*'",
+    command = ['java', "-cp", "'*'",  'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
+               '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', os.getcwd()+'/mapping_for_corenlp.txt', '-outputFormat',
                'json', '-outputDirectory', tokenized_stories_dir]
     print("Tokenizing %i files in %s and saving in %s..." % (len(stories), stories_dir, tokenized_stories_dir))
-    subprocess.call(command)
+    print(' '.join(command))
+    # subprocess.call(command)
+    subprocess.Popen("cd /home/kmilacic/local/PreSumm/stanford-corenlp-full-2018-10-05/;"+' '.join(command), shell=True)
     print("Stanford CoreNLP Tokenizer has finished.")
-    os.remove("mapping_for_corenlp.txt")
+    # os.remove("mapping_for_corenlp.txt")
 
     # Check that the tokenized stories directory contains the same number of files as the original directory
     num_orig = len(os.listdir(stories_dir))
@@ -207,20 +340,26 @@ def hashhex(s):
 class BertData():
     def __init__(self, args):
         self.args = args
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-
+        # self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+        self.tokenizer = BertTokenizer.from_pretrained(args.use_this_bert, do_lower_case=True )
+        
         self.sep_token = '[SEP]'
         self.cls_token = '[CLS]'
         self.pad_token = '[PAD]'
-        self.tgt_bos = '[unused0]'
-        self.tgt_eos = '[unused1]'
-        self.tgt_sent_split = '[unused2]'
+        if args.use_this_bert == 'bert-base-multilingual-uncased' or args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
+            self.tgt_bos = '[unused1]'
+            self.tgt_eos = '[unused2]'
+            self.tgt_sent_split = '[unused3]'
+        else:
+            self.tgt_bos = '[unused0]'
+            self.tgt_eos = '[unused1]'
+            self.tgt_sent_split = '[unused2]'
         self.sep_vid = self.tokenizer.vocab[self.sep_token]
         self.cls_vid = self.tokenizer.vocab[self.cls_token]
         self.pad_vid = self.tokenizer.vocab[self.pad_token]
 
     def preprocess(self, src, tgt, sent_labels, use_bert_basic_tokenizer=False, is_test=False):
-
+        #is_test = True
         if ((not is_test) and len(src) == 0):
             return None
 
@@ -258,8 +397,12 @@ class BertData():
         cls_ids = [i for i, t in enumerate(src_subtoken_idxs) if t == self.cls_vid]
         sent_labels = sent_labels[:len(cls_ids)]
 
-        tgt_subtokens_str = '[unused0] ' + ' [unused2] '.join(
-            [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused1]'
+        if self.args.use_this_bert == 'bert-base-multilingual-uncased' or self.args.use_this_bert == '../../finetune_bert/finetuned_lm-sample-2':
+            tgt_subtokens_str = '[unused1] ' + ' [unused3] '.join(
+                [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused2]'
+        else:
+            tgt_subtokens_str = '[unused0] ' + ' [unused2] '.join(
+                [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused1]'
         tgt_subtoken = tgt_subtokens_str.split()[:self.args.max_tgt_ntokens]
         if ((not is_test) and len(tgt_subtoken) < self.args.min_tgt_ntokens):
             return None
@@ -329,24 +472,35 @@ def _format_to_bert(params):
 
 
 def format_to_lines(args):
-    corpus_mapping = {}
-    for corpus_type in ['valid', 'test', 'train']:
-        temp = []
-        for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
-            temp.append(hashhex(line.strip()))
-        corpus_mapping[corpus_type] = {key.strip(): 1 for key in temp}
-    train_files, valid_files, test_files = [], [], []
-    for f in glob.glob(pjoin(args.raw_path, '*.json')):
-        real_name = f.split('/')[-1].split('.')[0]
-        if (real_name in corpus_mapping['valid']):
-            valid_files.append(f)
-        elif (real_name in corpus_mapping['test']):
-            test_files.append(f)
-        elif (real_name in corpus_mapping['train']):
-            train_files.append(f)
-        # else:
-        #     train_files.append(f)
+    # corpus_mapping = {}
+    # for corpus_type in ['valid', 'test', 'train']:
+    #     temp = []
+    #     for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
+    #         temp.append(hashhex(line.strip()))
+    #         # temp.append(line.strip())
+    #     corpus_mapping[corpus_type] = {key.strip(): 1 for key in temp}
+    # train_files, valid_files, test_files = [], [], []
+    # for f in glob.glob(pjoin(args.raw_path, '*.json')):
+    #     # real_name = f.split('/')[-1].split('.')[0]
+    #     real_name = f.split('/')[-1].split('.')[0]
+    #     # print(real_name)
+    #     if (real_name in corpus_mapping['valid']):
+    #         valid_files.append(f)
+    #     elif (real_name in corpus_mapping['test']):
+    #         test_files.append(f)
+    #     elif (real_name in corpus_mapping['train']):
+    #         train_files.append(f)
+    #     ## ovo else je bilo zakomentarisano
+    #     else:
+    #         train_files.append(f)
 
+    ########
+    from sklearn.model_selection import train_test_split
+
+    all_files = glob.glob(pjoin(args.raw_path, 'src-*'))
+    train_plus_valid, test_files = train_test_split(all_files, test_size=0.03, random_state=42)
+    train_files, valid_files = train_test_split(train_plus_valid, test_size=0.035, random_state=42) # 0.035 x 0.97 = 0.03395
+    ########
     corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
     for corpus_type in ['train', 'valid', 'test']:
         a_lst = [(f, args) for f in corpora[corpus_type]]
@@ -357,27 +511,41 @@ def format_to_lines(args):
             dataset.append(d)
             if (len(dataset) > args.shard_size):
                 pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
-                with open(pt_file, 'w') as save:
-                    # save.write('\n'.join(dataset))
-                    save.write(json.dumps(dataset))
+                with open(pt_file, 'w', encoding='utf8') as save:
+                    json.dump(dataset, save, ensure_ascii=False)
                     p_ct += 1
                     dataset = []
+                    print('Saving: ', pt_file)
+
+
+                # with open(pt_file, 'w') as save:
+                #     # save.write('\n'.join(dataset))
+                #     save.write(json.dumps(dataset))
+                #     p_ct += 1
+                #     dataset = []
 
         pool.close()
         pool.join()
         if (len(dataset) > 0):
             pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
-            with open(pt_file, 'w') as save:
-                # save.write('\n'.join(dataset))
-                save.write(json.dumps(dataset))
+
+            with open(pt_file, 'w', encoding='utf8') as save:
+                json.dump(dataset, save, ensure_ascii=False)
                 p_ct += 1
                 dataset = []
+                print('Saving: ', pt_file)
+
+            # with open(pt_file, 'w') as save:
+            #     save.write(json.dumps(dataset))
+            #     p_ct += 1
+            #     dataset = []
 
 
 def _format_to_lines(params):
     f, args = params
     print(f)
-    source, tgt = load_json(f, args.lower)
+    # source, tgt = load_json(f, args.lower)
+    source, tgt = load_json_sta(f, args.lower)
     return {'src': source, 'tgt': tgt}
 
 
